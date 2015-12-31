@@ -9,12 +9,12 @@ for selected directory. Recursive watching is in TODO.
 
 ## Compilation
 
-```make```
+`make`
 
 ## Usage
 
-```./inotify-watcher PATH```
-(example: ```./inotify-watcher /tmp```)
+`./inotify-watcher PATH`
+(example: `./inotify-watcher /tmp`)
 
 ## TODO
 
