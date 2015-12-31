@@ -27,3 +27,4 @@ before_script:
 
 script:
   - $SCAN_BUILD make CC=$CC
+  - 'stat --printf="Binary size for $CC: %s bytes\n" ./inotify-watcher'
