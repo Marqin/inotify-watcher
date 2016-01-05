@@ -5,8 +5,8 @@ CFLAGS = -Wall -Wextra -Werror -pedantic -std=c99
 
 all : inotify-watcher
 
-inotify-watcher : Makefile inotify-watcher.c
-	$(CC) $(CFLAGS)  inotify-watcher.c -o inotify-watcher
+inotify-watcher : Makefile inotify-watcher.c structs.c structs.h
+	$(CC) $(CFLAGS)  inotify-watcher.c structs.c -o inotify-watcher
 
 clean:
 	rm -f ./inotify-watcher

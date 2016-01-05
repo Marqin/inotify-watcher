@@ -16,9 +16,10 @@
 #include <sys/inotify.h>  // inotify stuff
 #include <sys/ioctl.h>    // ioctl()
 #include <signal.h>       // signal() and signals
+#include <stdlib.h>       // calloc, free
+#include <string.h>       // strlen, strcat, strcpy
+#include "structs.h"
 
-//! Helper macro used in printing event name.
-#define EVENT_NAME_MACRO  ( name ? *name : event->name )
 //! Stop flag for watcher.
 #define SIGNALS_TO_CATCH_LEN 6
 
@@ -48,33 +49,43 @@ void sig_handler( int sig ) {
   \param event caught inotify event.
   \param path watched path.
 */
-void printEvent( const struct inotify_event * const event, const char * const path ) {
-  const char * const * name;
+void printEvent( const struct inotify_event * const event, const path_t p ) {
+  char * name;
 
   if( event->len == 0 ) {
-    name = &path;
+    name = calloc( strlen(p.path) + 1, sizeof(char) );
+    strcpy( name, p.path );
   } else {
-    name = NULL;
+    //name = NULL;
+    name = calloc( strlen(event->name) + strlen(p.path) + 2, sizeof(char) );
+    //p.path
+    strcpy( name, p.path );
+    if( strlen(name) > 0 && name[strlen(name) - 1] != '/' ) {
+      strcat( name, "/" );
+    }
+    strcat( name, event->name );
   }
 
-  if (event->mask & IN_ACCESS)        printf( "\"%s\" was accessed. ", EVENT_NAME_MACRO );
-  if (event->mask & IN_MODIFY)        printf( "\"%s\" was modified. ", EVENT_NAME_MACRO );
-  if (event->mask & IN_ATTRIB)        printf( "\"%s\" has metadata changed. ", EVENT_NAME_MACRO );
-  if (event->mask & IN_CLOSE_WRITE)   printf( "\"%s\" was closed (read-only). ", EVENT_NAME_MACRO );
-  if (event->mask & IN_CLOSE_NOWRITE) printf( "\"%s\" was closed (writeable). ", EVENT_NAME_MACRO );
-  if (event->mask & IN_OPEN)          printf( "\"%s\" was opened. ", EVENT_NAME_MACRO );
-  if (event->mask & IN_MOVED_FROM)    printf( "\"%s\" was moved from \"%s\". ", EVENT_NAME_MACRO, path );
-  if (event->mask & IN_MOVED_TO)      printf( "\"%s\" was moved to \"%s\". ", EVENT_NAME_MACRO, path );
-  if (event->mask & IN_CREATE)        printf( "\"%s\" was created. ", EVENT_NAME_MACRO );
-  if (event->mask & IN_DELETE)        printf( "\"%s\" was deleted. ", EVENT_NAME_MACRO );
-  if (event->mask & IN_DELETE_SELF)   printf( "\"%s\" (self) was deleted. ", EVENT_NAME_MACRO );
-  if (event->mask & IN_MOVE_SELF)     printf( "\"%s\" (self) was moved. ", EVENT_NAME_MACRO );
+  if (event->mask & IN_ACCESS)        printf( "\"%s\" was accessed. ", name );
+  if (event->mask & IN_MODIFY)        printf( "\"%s\" was modified. ", name );
+  if (event->mask & IN_ATTRIB)        printf( "\"%s\" has metadata changed. ", name );
+  if (event->mask & IN_CLOSE_WRITE)   printf( "\"%s\" was closed (read-only). ", name );
+  if (event->mask & IN_CLOSE_NOWRITE) printf( "\"%s\" was closed (writeable). ", name );
+  if (event->mask & IN_OPEN)          printf( "\"%s\" was opened. ", name );
+  if (event->mask & IN_MOVED_FROM)    printf( "\"%s\" was moved from \"%s\". ", name, p.path );
+  if (event->mask & IN_MOVED_TO)      printf( "\"%s\" was moved to \"%s\". ", name, p.path );
+  if (event->mask & IN_CREATE)        printf( "\"%s\" was created. ", name );
+  if (event->mask & IN_DELETE)        printf( "\"%s\" was deleted. ", name );
+  if (event->mask & IN_DELETE_SELF)   printf( "\"%s\" (self) was deleted. ", name );
+  if (event->mask & IN_MOVE_SELF)     printf( "\"%s\" (self) was moved. ", name );
 
-  if (event->mask & IN_UNMOUNT)       printf( "\"%s\" filesystem was unmounted! ", EVENT_NAME_MACRO );
+  if (event->mask & IN_UNMOUNT)       printf( "\"%s\" filesystem was unmounted! ", name );
   if (event->mask & IN_Q_OVERFLOW)    printf( "EVENT QUEUE OVERFLOW! " );
-  if (event->mask & IN_IGNORED)       printf( "\"%s\" was ignored. ", EVENT_NAME_MACRO );
+  if (event->mask & IN_IGNORED)       printf( "\"%s\" was ignored. ", name );
 
-  if (event->mask & IN_ISDIR)         printf( "\"%s\" is directory. ", EVENT_NAME_MACRO );
+  if (event->mask & IN_ISDIR)         printf( "\"%s\" is directory. ", name );
+
+  free(name);
 
   printf("\n");
 }
@@ -84,9 +95,11 @@ void printEvent( const struct inotify_event * const event, const char * const pa
 /*!
   \param path path to watch.
 */
-int watch( const char * const path ) {
+int watch( const char * const watch_path ) {
 
-  printf( "Watching path \"%s\".\n", path );
+  path_t p = new_path( watch_path );
+
+  printf( "Watching path \"%s\".\n", p.path );
 
   const int fd = inotify_init();
   if ( fd < 0 ) {
@@ -94,8 +107,8 @@ int watch( const char * const path ) {
     return 0;  // false
   }
 
-  const int wd = inotify_add_watch( fd, path, IN_ALL_EVENTS );
-  if( wd < 0 ) {
+  p.wd = inotify_add_watch( fd, p.path, IN_ALL_EVENTS );
+  if( p.wd < 0 ) {
     perror( "inotify_add_watch" );
     return 0;  // false;
   }
@@ -118,12 +131,12 @@ int watch( const char * const path ) {
         break;
       }
 
-      printEvent( event, path );
+      printEvent( event, p );
       i += sizeof( struct inotify_event ) + event->len;
     }
   }
 
-  inotify_rm_watch( fd, wd );
+  inotify_rm_watch( fd, p.wd );
   close( fd );
   return 1;  // true
 }
