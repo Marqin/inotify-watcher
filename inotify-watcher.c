@@ -56,9 +56,7 @@ void printEvent( const struct inotify_event * const event, const path_t p ) {
     name = calloc( strlen(p.path) + 1, sizeof(char) );
     strcpy( name, p.path );
   } else {
-    //name = NULL;
     name = calloc( strlen(event->name) + strlen(p.path) + 2, sizeof(char) );
-    //p.path
     strcpy( name, p.path );
     if( strlen(name) > 0 && name[strlen(name) - 1] != '/' ) {
       strcat( name, "/" );
@@ -66,24 +64,25 @@ void printEvent( const struct inotify_event * const event, const path_t p ) {
     strcat( name, event->name );
   }
 
-  if (event->mask & IN_ACCESS)        printf( "\"%s\" was accessed. ", name );
-  if (event->mask & IN_MODIFY)        printf( "\"%s\" was modified. ", name );
-  if (event->mask & IN_ATTRIB)        printf( "\"%s\" has metadata changed. ", name );
-  if (event->mask & IN_CLOSE_WRITE)   printf( "\"%s\" was closed (read-only). ", name );
-  if (event->mask & IN_CLOSE_NOWRITE) printf( "\"%s\" was closed (writeable). ", name );
-  if (event->mask & IN_OPEN)          printf( "\"%s\" was opened. ", name );
-  if (event->mask & IN_MOVED_FROM)    printf( "\"%s\" was moved from \"%s\". ", name, p.path );
-  if (event->mask & IN_MOVED_TO)      printf( "\"%s\" was moved to \"%s\". ", name, p.path );
-  if (event->mask & IN_CREATE)        printf( "\"%s\" was created. ", name );
-  if (event->mask & IN_DELETE)        printf( "\"%s\" was deleted. ", name );
-  if (event->mask & IN_DELETE_SELF)   printf( "\"%s\" (self) was deleted. ", name );
-  if (event->mask & IN_MOVE_SELF)     printf( "\"%s\" (self) was moved. ", name );
+  if( event->mask & IN_ACCESS )        printf( "\"%s\" was accessed. ", name );
+  if( event->mask & IN_MODIFY )        printf( "\"%s\" was modified. ", name );
+  if( event->mask & IN_ATTRIB )        printf( "\"%s\" has metadata changed. ", name );
+  if( event->mask & IN_CLOSE_WRITE )   printf( "\"%s\" was closed (read-only). ", name );
+  if( event->mask & IN_CLOSE_NOWRITE ) printf( "\"%s\" was closed (writeable). ", name );
+  if( event->mask & IN_OPEN )          printf( "\"%s\" was opened. ", name );
+  if( event->mask & IN_MOVED_FROM )    printf( "\"%s\" was moved from \"%s\". ", name, p.path );
+  if( event->mask & IN_MOVED_TO )      printf( "\"%s\" was moved to \"%s\". ", name, p.path );
+  if( event->mask & IN_CREATE )        printf( "\"%s\" was created. ", name );
+  if( event->mask & IN_DELETE )        printf( "\"%s\" was deleted. ", name );
+  if( event->mask & IN_DELETE_SELF )   printf( "\"%s\" (self) was deleted. ", name );
+  if( event->mask & IN_MOVE_SELF )     printf( "\"%s\" (self) was moved. ", name );
 
-  if (event->mask & IN_UNMOUNT)       printf( "\"%s\" filesystem was unmounted! ", name );
-  if (event->mask & IN_Q_OVERFLOW)    printf( "EVENT QUEUE OVERFLOW! " );
-  if (event->mask & IN_IGNORED)       printf( "\"%s\" was ignored. ", name );
+  if( event->mask & IN_UNMOUNT )       printf( "\"%s\" filesystem was unmounted! ", name );
+  if( event->mask & IN_Q_OVERFLOW )    printf( "EVENT QUEUE OVERFLOW! " );
+  if( event->mask & IN_IGNORED )       printf( "\"%s\" was ignored. ", name );
+  // ignored is send after path was removed from inotify
 
-  if (event->mask & IN_ISDIR)         printf( "\"%s\" is directory. ", name );
+  if( event->mask & IN_ISDIR )         printf( "\"%s\" is directory. ", name );
 
   free(name);
 
