@@ -15,9 +15,8 @@ path_t new_path( const char * const watch_path ) {
   return p;
 }
 
-void del_path( ) {
-//  if( p->path != NULL ) {
-//    free( p->path );
-//  }
-//  free(p);
+void del_path( path_t * p ) {
+  if( p->path != NULL ) {
+    free( p->path );
+  }
 }

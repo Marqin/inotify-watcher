@@ -135,6 +135,7 @@ int watch( const char * const watch_path ) {
     }
   }
 
+  del_path( &p );
   inotify_rm_watch( fd, p.wd );
   close( fd );
   return 1;  // true

@@ -11,3 +11,4 @@ typedef struct path {
 } path_t;
 
 path_t new_path( const char * const );
+void del_path( path_t * );
