@@ -5,10 +5,12 @@
 
 #pragma once
 
+#include <stdint.h>
+
 typedef struct path {
-  char * path;
+  uint8_t * path;
   int wd;
 } path_t;
 
-path_t new_path( const char * const );
+path_t new_path( const uint8_t * const );
 void del_path( path_t * );

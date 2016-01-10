@@ -18,16 +18,18 @@
 #include <signal.h>       // signal() and signals
 #include <stdlib.h>       // calloc, free
 #include <string.h>       // strlen, strcat, strcpy
+#include <stdint.h>
+#include <stdbool.h>
 #include "structs.h"
 
 //! Stop flag for watcher.
 #define SIGNALS_TO_CATCH_LEN 6
 
 //! Array of signals to catch.
-const int SIGNALS_TO_CATCH[SIGNALS_TO_CATCH_LEN] = { SIGINT, SIGTERM, SIGABRT, SIGSEGV, SIGILL, SIGQUIT };
+const uint8_t SIGNALS_TO_CATCH[SIGNALS_TO_CATCH_LEN] = { SIGINT, SIGTERM, SIGABRT, SIGSEGV, SIGILL, SIGQUIT };
 
 //! Stop flag for watcher.
-int run = 1;
+bool run = true;
 
 //! Signal handler.
 /*!
@@ -35,9 +37,9 @@ int run = 1;
   \param sig signal number.
 */
 void sig_handler( int sig ) {
-  for( int i = 0; i < SIGNALS_TO_CATCH_LEN; i++ ) {
+  for( uint8_t i = 0; i < SIGNALS_TO_CATCH_LEN; i++ ) {
     if( sig == SIGNALS_TO_CATCH[i] ) {
-      run = 0;
+      run = false;
       break;
     }
   }
@@ -50,18 +52,18 @@ void sig_handler( int sig ) {
   \param path watched path.
 */
 void printEvent( const struct inotify_event * const event, const path_t p ) {
-  char * name;
+  uint8_t * name;
 
   if( event->len == 0 ) {
-    name = calloc( strlen(p.path) + 1, sizeof(char) );
-    strcpy( name, p.path );
+    name = calloc( strlen((char *)p.path) + 1, sizeof(uint8_t) );
+    strcpy( (char *)name, (char *)p.path );
   } else {
-    name = calloc( strlen(event->name) + strlen(p.path) + 2, sizeof(char) );
-    strcpy( name, p.path );
-    if( strlen(name) > 0 && name[strlen(name) - 1] != '/' ) {
-      strcat( name, "/" );
+    name = calloc( strlen((char *)event->name) + strlen((char *)p.path) + 2, sizeof(uint8_t) );
+    strcpy( (char *)name, (char *)p.path );
+    if( strlen((char *)name) > 0 && name[strlen((char *)name) - 1] != '/' ) {
+      strcat( (char *)name, "/" );
     }
-    strcat( name, event->name );
+    strcat( (char *)name, (char *)event->name );
   }
 
   if( event->mask & IN_ACCESS )        printf( "\"%s\" was accessed. ", name );
@@ -94,7 +96,7 @@ void printEvent( const struct inotify_event * const event, const path_t p ) {
 /*!
   \param path path to watch.
 */
-int watch( const char * const watch_path ) {
+bool watch( const uint8_t * const watch_path ) {
 
   path_t p = new_path( watch_path );
 
@@ -103,27 +105,27 @@ int watch( const char * const watch_path ) {
   const int fd = inotify_init();
   if ( fd < 0 ) {
     perror( "inotify_init" );
-    return 0;  // false
+    return false;
   }
 
-  p.wd = inotify_add_watch( fd, p.path, IN_ALL_EVENTS );
+  p.wd = inotify_add_watch( fd, (char *)p.path, IN_ALL_EVENTS );
   if( p.wd < 0 ) {
     perror( "inotify_add_watch" );
-    return 0;  // false;
+    return false;
   }
 
   while( run ) {
 
-    unsigned int length = 0;
+    size_t length = 0;
     ioctl( fd, FIONREAD, &length );  // check if there are new events
     if( length <= 0 ) {
       continue;
     }
 
-    char buffer[length];
+    uint8_t * buffer = calloc( length, sizeof(uint8_t *) );
     read( fd, buffer, length );
 
-    for( unsigned int i = 0; i < length; ) {
+    for( size_t i = 0; i < length; ) {
       const struct inotify_event * const event = (struct inotify_event *) &(buffer[i]);
 
       if( event == NULL ) {
@@ -138,7 +140,7 @@ int watch( const char * const watch_path ) {
   del_path( &p );
   inotify_rm_watch( fd, p.wd );
   close( fd );
-  return 1;  // true
+  return true;
 }
 
 
@@ -149,7 +151,7 @@ int watch( const char * const watch_path ) {
 */
 int main( int argc, char * argv[] ) {
 
-  for( int i = 0; i < SIGNALS_TO_CATCH_LEN; i++ ) {
+  for( uint8_t i = 0; i < SIGNALS_TO_CATCH_LEN; i++ ) {
     signal( SIGNALS_TO_CATCH[i], sig_handler );
   }
 
@@ -158,7 +160,7 @@ int main( int argc, char * argv[] ) {
     return 1;
   }
 
-  if( ! watch( argv[1] ) ) {
+  if( ! watch( (uint8_t *)(argv[1]) ) ) {
     return 1;
   }
 

@@ -7,10 +7,10 @@
 #include <string.h>
 #include "structs.h"
 
-path_t new_path( const char * const watch_path ) {
+path_t new_path( const uint8_t * const watch_path ) {
   path_t p;
-  p.path = calloc( strlen(watch_path) + 1, sizeof(char) );
-  strcpy( p.path, watch_path );
+  p.path = calloc( strlen((char*)watch_path) + 1, sizeof(uint8_t) );
+  strcpy( (char*)p.path, (char*)watch_path );
   p.wd = -1;
   return p;
 }
